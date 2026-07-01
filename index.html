@@ -33,7 +33,7 @@
         }
         button:hover { background-color: #1d4ed8; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 30px; background: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; background: white; }
         th, td { border: 1px solid #cbd5e1; padding: 12px; text-align: center; }
         th { background-color: #f1f5f9; color: #1e3a8a; }
         tr:nth-child(even) { background-color: #f8fafc; }
@@ -41,19 +41,23 @@
         .print-btn { background-color: #059669; margin-bottom: 20px; }
         .print-btn:hover { background-color: #047857; }
 
-        /* CRITICAL: Print Padding & Layout Optimizations */
+        /* CRITICAL: Aggressive Print Optimization to force 1 page */
         @media print {
             .no-print { display: none !important; }
             body { 
                 background: white; 
                 color: black; 
                 margin: 0; 
-                padding: 0 1.5cm !important; /* Forces clean margins on the left and right */
+                padding: 0 1.2cm !important; 
             }
-            .container { box-shadow: none; padding: 20px 0; }
-            table { page-break-inside: avoid; border: 2px solid black; width: 100%; }
-            th, td { border: 1px solid black; padding: 10px; font-size: 12pt; }
+            .container { box-shadow: none; padding: 10px 0 0 0; }
+            h2 { margin-top: 0; margin-bottom: 5px; font-size: 18pt; }
+            p { margin-top: 0; margin-bottom: 10px; font-size: 11pt; }
+            table { page-break-inside: avoid; border: 2px solid black; width: 100%; margin-top: 10px; }
+            /* Shrink table padding so 10 rows fit easily */
+            th, td { border: 1px solid black; padding: 6px !important; font-size: 11pt !important; }
             th { background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .vs { margin: 1px 0; font-size: 10px; }
         }
     </style>
 </head>
@@ -109,7 +113,6 @@ function generateSchedule() {
         return;
     }
 
-    // Initialize historical matrix tracking structures
     let byeCounts = {};
     let midRestGiven = {};
     let partnerMatrix = {};
@@ -143,7 +146,6 @@ function generateSchedule() {
             </thead>
             <tbody>`;
 
-    // Define window for middle rounds (e.g., rounds 4-7 in a 10 round matrix)
     const midStart = Math.floor(rounds * 0.35) + 1;
     const midEnd = Math.floor(rounds * 0.75);
 
@@ -151,20 +153,17 @@ function generateSchedule() {
         let playersNeeded = courts * 4;
         let sitOutCount = Math.max(0, players.length - playersNeeded);
         
-        // --- STEP 1: SELECT SITTING OUT PLAYERS ---
         let sitOutScores = [];
         players.forEach(p => {
-            let score = byeCounts[p] * 1000; // Primary directive: Equal number of byes overall
+            let score = byeCounts[p] * 1000; 
             
-            // Check if this player requested a mid-session rest
             let wantsMidRest = restPlayers.some(rp => rp.toLowerCase() === p.toLowerCase());
             let isMidRound = (r >= midStart && r <= midEnd);
             
             if (wantsMidRest && isMidRound && !midRestGiven[p]) {
-                score -= 500; // Strongly pull them to the bench during mid-session
+                score -= 500; 
             }
             
-            // Subtle random jitter so ties break organically
             score += Math.random(); 
             sitOutScores.push({ player: p, score: score });
         });
@@ -173,25 +172,21 @@ function generateSchedule() {
         let bench = sitOutScores.slice(0, sitOutCount).map(x => x.player);
         let active = players.filter(p => !bench.includes(p));
         
-        // Log byes
         bench.forEach(p => {
             byeCounts[p]++;
             if (r >= midStart && r <= midEnd) midRestGiven[p] = true;
         });
 
-        // --- STEP 2: OPTIMIZE CO-PLAYING AND OPPOSITION (1,000 SIMULATIONS) ---
         let bestActiveLayout = [];
         let minPenalty = Infinity;
         
         for (let sim = 0; sim < 1000; sim++) {
-            // Shuffle active pool
             let currentShuffle = [...active];
             for (let i = currentShuffle.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [currentShuffle[i], currentShuffle[j]] = [currentShuffle[j], currentShuffle[i]];
             }
             
-            // Calculate structural conflict score for this combination
             let penalty = 0;
             let idx = 0;
             
@@ -202,10 +197,8 @@ function generateSchedule() {
                     let p3 = currentShuffle[idx+2];
                     let p4 = currentShuffle[idx+3];
                     
-                    // Heavy penalty for repeating partners
                     penalty += (partnerMatrix[p1][p2] * 150) + (partnerMatrix[p3][p4] * 150);
                     
-                    // Moderate penalty for repeating opponents
                     penalty += (opponentMatrix[p1][p3] * 20) + (opponentMatrix[p1][p4] * 20) +
                                (opponentMatrix[p2][p3] * 20) + (opponentMatrix[p2][p4] * 20);
                     idx += 4;
@@ -218,7 +211,6 @@ function generateSchedule() {
             }
         }
 
-        // --- STEP 3: APPLY WINNING ASSIGNMENT & UPDATE HISTORIES ---
         html += `<tr><td><strong>${r}</strong></td>`;
         let activeIndex = 0;
         
@@ -229,11 +221,9 @@ function generateSchedule() {
                 let p3 = bestActiveLayout[activeIndex++];
                 let p4 = bestActiveLayout[activeIndex++];
                 
-                // Track partnerships
                 partnerMatrix[p1][p2]++; partnerMatrix[p2][p1]++;
                 partnerMatrix[p3][p4]++; partnerMatrix[p4][p3]++;
                 
-                // Track oppositions
                 opponentMatrix[p1][p3]++; opponentMatrix[p3][p1]++;
                 opponentMatrix[p1][p4]++; opponentMatrix[p4][p1]++;
                 opponentMatrix[p2][p3]++; opponentMatrix[p3][p2]++;
@@ -249,17 +239,14 @@ function generateSchedule() {
     }
     
     html += `</tbody></table>`;
-    // --- PROMO FOOTER ---
+    
+    // --- COMPACT PROMO FOOTER ---
     html += `
-        <div style="margin-top: 40px; text-align: center; page-break-inside: avoid; border-top: 2px dashed #cbd5e1; padding-top: 20px;">
-            <p style="font-size: 22px; font-weight: bold; color: #1e3a8a; margin-bottom: 15px;">
-                Make your own simple draw: Use <span style="color: #2563eb;">bit.ly/4wpuMVL</span> or scan
+        <div style="margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 20px; page-break-inside: avoid; border-top: 2px dashed #cbd5e1; padding-top: 15px;">
+            <p style="font-size: 16px; font-weight: bold; color: #1e3a8a; margin: 0; text-align: right;">
+                Make your own simple draw:<br>Use <span style="color: #2563eb;">bit.ly/4wpuMVL</span> or scan ➡️
             </p>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://bit.ly/4wpuMVL" alt="QR Code" style="width: 150px; height: 150px; border: 2px solid #333; border-radius: 8px; padding: 5px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=https://bit.ly/4wpuMVL" alt="QR Code" style="width: 90px; height: 90px; border: 2px solid #333; border-radius: 8px; padding: 3px;">
         </div>`;
-    document.getElementById('output-area').innerHTML = html;
-}
-</script>
-
-</body>
-</html>
+        
+    document.getElementById('output-
