@@ -71,11 +71,11 @@
         <input type="text" id="group-name" placeholder="Pickleball Rotation Schedule">
         
         <label for="names">Player Names (separated by commas):</label>
-        <textarea id="names" rows="3" placeholder="e.g. Paul O, Bill, Bob, Wayne, Ian M, Grey, Quinn, Simon, Ed"></textarea>
+        <textarea id="names" rows="3" placeholder="e.g. James, Mary, John, Patricia, Robert, Jennifer, Michael, Linda, William"></textarea>
         
-        <label for="rest-names">Who needs a mid-session rest? (Optional - up to 4 names separated by commas):</label>
-        <input type="text" id="rest-names" placeholder="e.g. Bill, Ed">
-        <div class="help-text">These players will be heavily prioritized to sit out during the middle rounds.</div>
+        <label for="rest-names">Who might like a mid-session rest? (Optional - up to 4 names separated by commas):</label>
+        <input type="text" id="rest-names" placeholder="e.g. James, Mary">
+        <div class="help-text">These players will be heavily prioritized to sit out during the middle rounds if there are byes.</div>
         
         <div class="row">
             <div class="flex-1">
@@ -244,7 +244,7 @@ function generateSchedule() {
     html += `
         <div style="margin-top: 25px; display: flex; align-items: center; justify-content: center; gap: 20px; page-break-inside: avoid; border-top: 2px dashed #cbd5e1; padding-top: 20px;">
             <p style="font-size: 18px; font-weight: bold; color: #1e3a8a; margin: 0; text-align: right;">
-                Make your own simple draw:<br>Use <span style="color: #2563eb;">bit.ly/4wpuMVL</span> or scan ➡️
+                Make your own and print:<br>Use <span style="color: #2563eb;">bit.ly/4wpuMVL</span> or scan ➡️
             </p>
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://bit.ly/4wpuMVL" alt="QR Code" style="width: 100px; height: 100px; border: 2px solid #333; border-radius: 8px; padding: 4px;">
         </div>`;
