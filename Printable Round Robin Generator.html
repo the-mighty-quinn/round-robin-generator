@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pickleball Round Robin Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 850px;
+            margin: 30px auto;
+            padding: 0 20px;
+            color: #333;
+            background-color: #f7f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h1 { color: #1e3a8a; margin-top: 0; }
+        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; }
+        input, textarea {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px;
+        }
+        .row { display: flex; gap: 15px; }
+        .flex-1 { flex: 1; }
+        .help-text { font-size: 13px; color: #64748b; margin-top: 2px; }
+        button {
+            background-color: #2563eb; color: white; border: none; padding: 12px 20px; 
+            font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 20px; width: 100%;
+        }
+        button:hover { background-color: #1d4ed8; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; background: white; }
+        th, td { border: 1px solid #cbd5e1; padding: 12px; text-align: center; }
+        th { background-color: #f1f5f9; color: #1e3a8a; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .vs { font-size: 12px; color: #64748b; font-weight: bold; display: block; margin: 4px 0; }
+        .print-btn { background-color: #059669; margin-bottom: 20px; }
+        .print-btn:hover { background-color: #047857; }
+
+        /* CRITICAL: Print Padding & Layout Optimizations */
+        @media print {
+            .no-print { display: none !important; }
+            body { 
+                background: white; 
+                color: black; 
+                margin: 0; 
+                padding: 0 1.5cm !important; /* Forces clean margins on the left and right */
+            }
+            .container { box-shadow: none; padding: 20px 0; }
+            table { page-break-inside: avoid; border: 2px solid black; width: 100%; }
+            th, td { border: 1px solid black; padding: 10px; font-size: 12pt; }
+            th { background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="no-print">
+        <h1>🏓 Pickleball Round Robin Generator</h1>
+        
+        <label for="group-name">Group / Event Name (Optional):</label>
+        <input type="text" id="group-name" placeholder="Pickleball Rotation Schedule">
+        
+        <label for="names">Player Names (separated by commas):</label>
+        <textarea id="names" rows="3" placeholder="e.g. Paul O, Bill, Bob, Wayne, Ian M, Grey, Quinn, Simon, Ed"></textarea>
+        
+        <label for="rest-names">Who needs a mid-session rest? (Optional - up to 4 names separated by commas):</label>
+        <input type="text" id="rest-names" placeholder="e.g. Bill, Ed">
+        <div class="help-text">These players will be heavily prioritized to sit out during the middle rounds.</div>
+        
+        <div class="row">
+            <div class="flex-1">
+                <label for="courts">Number of Courts:</label>
+                <input type="number" id="courts" value="2" min="1">
+            </div>
+            <div class="flex-1">
+                <label for="rounds">Number of Games (Rounds):</label>
+                <input type="number" id="rounds" value="10" min="1">
+            </div>
+        </div>
+        
+        <button onclick="generateSchedule()">Generate Balanced Schedule</button>
+        <hr style="margin-top:30px; border: 0; border-top: 1px solid #e2e8f0;">
+    </div>
+
+    <div id="output-area"></div>
+</div>
+
+<script>
+function generateSchedule() {
+    const titleInput = document.getElementById('group-name').value.trim();
+    const scheduleTitle = titleInput || "Pickleball Rotation Schedule";
+    
+    const nameInput = document.getElementById('names').value;
+    const restInput = document.getElementById('rest-names').value;
+    const courts = parseInt(document.getElementById('courts').value);
+    const rounds = parseInt(document.getElementById('rounds').value) || 10;
+    
+    let players = nameInput.split(',').map(n => n.trim()).filter(n => n.length > 0);
+    let restPlayers = restInput.split(',').map(n => n.trim()).filter(n => n.length > 0);
+    
+    if (players.length < 4) {
+        alert('You need at least 4 players to generate a game!');
+        return;
+    }
+
+    // Initialize historical matrix tracking structures
+    let byeCounts = {};
+    let midRestGiven = {};
+    let partnerMatrix = {};
+    let opponentMatrix = {};
+
+    players.forEach(p => {
+        byeCounts[p] = 0;
+        midRestGiven[p] = false;
+        partnerMatrix[p] = {};
+        opponentMatrix[p] = {};
+        players.forEach(other => {
+            partnerMatrix[p][other] = 0;
+            opponentMatrix[p][other] = 0;
+        });
+    });
+
+    let html = `
+        <button class="no-print print-btn" onclick="window.print()">🖨️ Print Schedule</button>
+        <h2>${scheduleTitle}</h2>
+        <p><strong>Players:</strong> ${players.join(', ')}</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Round</th>`;
+    
+    for (let i = 1; i <= courts; i++) {
+        html += `<th>Court ${i}</th>`;
+    }
+    html += `       <th>Sitting Out (Bye)</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    // Define window for middle rounds (e.g., rounds 4-7 in a 10 round matrix)
+    const midStart = Math.floor(rounds * 0.35) + 1;
+    const midEnd = Math.floor(rounds * 0.75);
+
+    for (let r = 1; r <= rounds; r++) {
+        let playersNeeded = courts * 4;
+        let sitOutCount = Math.max(0, players.length - playersNeeded);
+        
+        // --- STEP 1: SELECT SITTING OUT PLAYERS ---
+        let sitOutScores = [];
+        players.forEach(p => {
+            let score = byeCounts[p] * 1000; // Primary directive: Equal number of byes overall
+            
+            // Check if this player requested a mid-session rest
+            let wantsMidRest = restPlayers.some(rp => rp.toLowerCase() === p.toLowerCase());
+            let isMidRound = (r >= midStart && r <= midEnd);
+            
+            if (wantsMidRest && isMidRound && !midRestGiven[p]) {
+                score -= 500; // Strongly pull them to the bench during mid-session
+            }
+            
+            // Subtle random jitter so ties break organically
+            score += Math.random(); 
+            sitOutScores.push({ player: p, score: score });
+        });
+        
+        sitOutScores.sort((a, b) => a.score - b.score);
+        let bench = sitOutScores.slice(0, sitOutCount).map(x => x.player);
+        let active = players.filter(p => !bench.includes(p));
+        
+        // Log byes
+        bench.forEach(p => {
+            byeCounts[p]++;
+            if (r >= midStart && r <= midEnd) midRestGiven[p] = true;
+        });
+
+        // --- STEP 2: OPTIMIZE CO-PLAYING AND OPPOSITION (1,000 SIMULATIONS) ---
+        let bestActiveLayout = [];
+        let minPenalty = Infinity;
+        
+        for (let sim = 0; sim < 1000; sim++) {
+            // Shuffle active pool
+            let currentShuffle = [...active];
+            for (let i = currentShuffle.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [currentShuffle[i], currentShuffle[j]] = [currentShuffle[j], currentShuffle[i]];
+            }
+            
+            // Calculate structural conflict score for this combination
+            let penalty = 0;
+            let idx = 0;
+            
+            for (let c = 0; c < courts; c++) {
+                if (idx + 3 < currentShuffle.length) {
+                    let p1 = currentShuffle[idx];
+                    let p2 = currentShuffle[idx+1];
+                    let p3 = currentShuffle[idx+2];
+                    let p4 = currentShuffle[idx+3];
+                    
+                    // Heavy penalty for repeating partners
+                    penalty += (partnerMatrix[p1][p2] * 150) + (partnerMatrix[p3][p4] * 150);
+                    
+                    // Moderate penalty for repeating opponents
+                    penalty += (opponentMatrix[p1][p3] * 20) + (opponentMatrix[p1][p4] * 20) +
+                               (opponentMatrix[p2][p3] * 20) + (opponentMatrix[p2][p4] * 20);
+                    idx += 4;
+                }
+            }
+            
+            if (penalty < minPenalty) {
+                minPenalty = penalty;
+                bestActiveLayout = currentShuffle;
+            }
+        }
+
+        // --- STEP 3: APPLY WINNING ASSIGNMENT & UPDATE HISTORIES ---
+        html += `<tr><td><strong>${r}</strong></td>`;
+        let activeIndex = 0;
+        
+        for (let c = 1; c <= courts; c++) {
+            if (activeIndex + 3 < bestActiveLayout.length) {
+                let p1 = bestActiveLayout[activeIndex++];
+                let p2 = bestActiveLayout[activeIndex++];
+                let p3 = bestActiveLayout[activeIndex++];
+                let p4 = bestActiveLayout[activeIndex++];
+                
+                // Track partnerships
+                partnerMatrix[p1][p2]++; partnerMatrix[p2][p1]++;
+                partnerMatrix[p3][p4]++; partnerMatrix[p4][p3]++;
+                
+                // Track oppositions
+                opponentMatrix[p1][p3]++; opponentMatrix[p3][p1]++;
+                opponentMatrix[p1][p4]++; opponentMatrix[p4][p1]++;
+                opponentMatrix[p2][p3]++; opponentMatrix[p3][p2]++;
+                opponentMatrix[p2][p4]++; opponentMatrix[p4][p2]++;
+                
+                html += `<td>${p1} & ${p2}<span class="vs">vs</span>${p3} & ${p4}</td>`;
+            } else {
+                html += `<td>—</td>`;
+            }
+        }
+        
+        html += `<td>${bench.join(', ') || 'None'}</td></tr>`;
+    }
+    
+    html += `</tbody></table>`;
+    document.getElementById('output-area').innerHTML = html;
+}
+</script>
+
+</body>
+</html>
