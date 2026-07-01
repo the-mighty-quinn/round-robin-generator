@@ -249,6 +249,14 @@ function generateSchedule() {
     }
     
     html += `</tbody></table>`;
+    // --- PROMO FOOTER ---
+    html += `
+        <div style="margin-top: 40px; text-align: center; page-break-inside: avoid; border-top: 2px dashed #cbd5e1; padding-top: 20px;">
+            <p style="font-size: 22px; font-weight: bold; color: #1e3a8a; margin-bottom: 15px;">
+                Make your own simple draw: Use <span style="color: #2563eb;">bit.ly/4wpuMVL</span> or scan
+            </p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://bit.ly/4wpuMVL" alt="QR Code" style="width: 150px; height: 150px; border: 2px solid #333; border-radius: 8px; padding: 5px;">
+        </div>`;
     document.getElementById('output-area').innerHTML = html;
 }
 </script>
