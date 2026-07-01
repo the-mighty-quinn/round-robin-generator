@@ -41,7 +41,6 @@
         .print-btn { background-color: #059669; margin-bottom: 20px; }
         .print-btn:hover { background-color: #047857; }
 
-        /* CRITICAL: Aggressive Print Optimization to force 1 page */
         @media print {
             .no-print { display: none !important; }
             body { 
@@ -54,7 +53,6 @@
             h2 { margin-top: 0; margin-bottom: 5px; font-size: 18pt; }
             p { margin-top: 0; margin-bottom: 10px; font-size: 11pt; }
             table { page-break-inside: avoid; border: 2px solid black; width: 100%; margin-top: 10px; }
-            /* Shrink table padding so 10 rows fit easily */
             th, td { border: 1px solid black; padding: 6px !important; font-size: 11pt !important; }
             th { background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .vs { margin: 1px 0; font-size: 10px; }
@@ -249,4 +247,9 @@ function generateSchedule() {
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=https://bit.ly/4wpuMVL" alt="QR Code" style="width: 90px; height: 90px; border: 2px solid #333; border-radius: 8px; padding: 3px;">
         </div>`;
         
-    document.getElementById('output-
+    document.getElementById('output-area').innerHTML = html;
+}
+</script>
+
+</body>
+</html>
