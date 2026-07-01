@@ -41,6 +41,7 @@
         .print-btn { background-color: #059669; margin-bottom: 20px; }
         .print-btn:hover { background-color: #047857; }
 
+        /* CRITICAL: Goldilocks Print Optimization */
         @media print {
             .no-print { display: none !important; }
             body { 
@@ -49,13 +50,14 @@
                 margin: 0; 
                 padding: 0 1.2cm !important; 
             }
-            .container { box-shadow: none; padding: 10px 0 0 0; }
-            h2 { margin-top: 0; margin-bottom: 5px; font-size: 18pt; }
-            p { margin-top: 0; margin-bottom: 10px; font-size: 11pt; }
+            .container { box-shadow: none; padding: 15px 0 0 0; }
+            h2 { margin-top: 0; margin-bottom: 10px; font-size: 20pt; }
+            p { margin-top: 0; margin-bottom: 15px; font-size: 13pt; }
             table { page-break-inside: avoid; border: 2px solid black; width: 100%; margin-top: 10px; }
-            th, td { border: 1px solid black; padding: 6px !important; font-size: 11pt !important; }
+            /* Split the difference: 9px padding and 12pt font */
+            th, td { border: 1px solid black; padding: 9px !important; font-size: 12pt !important; }
             th { background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .vs { margin: 1px 0; font-size: 10px; }
+            .vs { margin: 2px 0; font-size: 11px; }
         }
     </style>
 </head>
@@ -240,11 +242,11 @@ function generateSchedule() {
     
     // --- COMPACT PROMO FOOTER ---
     html += `
-        <div style="margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 20px; page-break-inside: avoid; border-top: 2px dashed #cbd5e1; padding-top: 15px;">
-            <p style="font-size: 16px; font-weight: bold; color: #1e3a8a; margin: 0; text-align: right;">
+        <div style="margin-top: 25px; display: flex; align-items: center; justify-content: center; gap: 20px; page-break-inside: avoid; border-top: 2px dashed #cbd5e1; padding-top: 20px;">
+            <p style="font-size: 18px; font-weight: bold; color: #1e3a8a; margin: 0; text-align: right;">
                 Make your own simple draw:<br>Use <span style="color: #2563eb;">bit.ly/4wpuMVL</span> or scan ➡️
             </p>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=https://bit.ly/4wpuMVL" alt="QR Code" style="width: 90px; height: 90px; border: 2px solid #333; border-radius: 8px; padding: 3px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://bit.ly/4wpuMVL" alt="QR Code" style="width: 100px; height: 100px; border: 2px solid #333; border-radius: 8px; padding: 4px;">
         </div>`;
         
     document.getElementById('output-area').innerHTML = html;
