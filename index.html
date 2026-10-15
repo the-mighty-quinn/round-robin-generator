@@ -41,7 +41,7 @@
         .print-btn { background-color: #059669; margin-bottom: 20px; }
         .print-btn:hover { background-color: #047857; }
 
-        /* CRITICAL: Goldilocks Print Optimization */
+        /* Goldilocks Print Optimization */
         @media print {
             .no-print { display: none !important; }
             body { 
@@ -54,7 +54,6 @@
             h2 { margin-top: 0; margin-bottom: 10px; font-size: 20pt; }
             p { margin-top: 0; margin-bottom: 15px; font-size: 13pt; }
             table { page-break-inside: avoid; border: 2px solid black; width: 100%; margin-top: 10px; }
-            /* Split the difference: 9px padding and 12pt font */
             th, td { border: 1px solid black; padding: 9px !important; font-size: 12pt !important; }
             th { background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .vs { margin: 2px 0; font-size: 11px; }
@@ -71,11 +70,11 @@
         <input type="text" id="group-name" placeholder="Pickleball Rotation Schedule">
         
         <label for="names">Player Names (separated by commas):</label>
-        <textarea id="names" rows="3" placeholder="e.g. James, Mary, John, Patricia, Robert, Jennifer, Michael, Linda, William"></textarea>
+        <textarea id="names" rows="3" placeholder="e.g. Paul O, Bill, Bob, Wayne, Ian M, Grey, Quinn, Simon, Ed"></textarea>
         
-        <label for="rest-names">Who might like a mid-session rest? (Optional - up to 4 names separated by commas):</label>
-        <input type="text" id="rest-names" placeholder="e.g. James, Mary">
-        <div class="help-text">These players will be heavily prioritized to sit out during the middle rounds if there are byes.</div>
+        <label for="rest-names">Who needs a mid-session rest? (Optional - up to 4 names separated by commas):</label>
+        <input type="text" id="rest-names" placeholder="e.g. Bill, Ed">
+        <div class="help-text">These players will be heavily prioritized to sit out during the middle rounds.</div>
         
         <div class="row">
             <div class="flex-1">
@@ -117,10 +116,12 @@ function generateSchedule() {
     let midRestGiven = {};
     let partnerMatrix = {};
     let opponentMatrix = {};
+    let lastByeRound = {}; // Tracks the exact round a player last sat out
 
     players.forEach(p => {
         byeCounts[p] = 0;
         midRestGiven[p] = false;
+        lastByeRound[p] = 0; 
         partnerMatrix[p] = {};
         opponentMatrix[p] = {};
         players.forEach(other => {
@@ -153,18 +154,26 @@ function generateSchedule() {
         let playersNeeded = courts * 4;
         let sitOutCount = Math.max(0, players.length - playersNeeded);
         
+        // --- STEP 1: SELECT SITTING OUT PLAYERS ---
         let sitOutScores = [];
         players.forEach(p => {
-            let score = byeCounts[p] * 1000; 
+            let score = byeCounts[p] * 1000; // Primary directive: Equal total byes
+            
+            // --- NEW: Sliding Fatigue Penalty to separate byes ---
+            let roundsSinceLastBye = lastByeRound[p] === 0 ? 999 : r - lastByeRound[p];
+            if (roundsSinceLastBye === 1) score += 800;      // Back-to-back? Massively penalize
+            else if (roundsSinceLastBye === 2) score += 400; // 1 game apart? Heavily penalize
+            else if (roundsSinceLastBye === 3) score += 200; // 2 games apart? Penalize
+            else if (roundsSinceLastBye === 4) score += 100; // 3 games apart? Slightly penalize
             
             let wantsMidRest = restPlayers.some(rp => rp.toLowerCase() === p.toLowerCase());
             let isMidRound = (r >= midStart && r <= midEnd);
             
             if (wantsMidRest && isMidRound && !midRestGiven[p]) {
-                score -= 500; 
+                score -= 500; // Pull them to the bench during mid-session
             }
             
-            score += Math.random(); 
+            score += Math.random(); // Subtle random tiebreaker
             sitOutScores.push({ player: p, score: score });
         });
         
@@ -172,11 +181,14 @@ function generateSchedule() {
         let bench = sitOutScores.slice(0, sitOutCount).map(x => x.player);
         let active = players.filter(p => !bench.includes(p));
         
+        // Log byes and track the round they occurred
         bench.forEach(p => {
             byeCounts[p]++;
+            lastByeRound[p] = r; 
             if (r >= midStart && r <= midEnd) midRestGiven[p] = true;
         });
 
+        // --- STEP 2: OPTIMIZE CO-PLAYING AND OPPOSITION (1,000 SIMULATIONS) ---
         let bestActiveLayout = [];
         let minPenalty = Infinity;
         
@@ -211,6 +223,7 @@ function generateSchedule() {
             }
         }
 
+        // --- STEP 3: APPLY WINNING ASSIGNMENT & UPDATE HISTORIES ---
         html += `<tr><td><strong>${r}</strong></td>`;
         let activeIndex = 0;
         
@@ -244,7 +257,7 @@ function generateSchedule() {
     html += `
         <div style="margin-top: 25px; display: flex; align-items: center; justify-content: center; gap: 20px; page-break-inside: avoid; border-top: 2px dashed #cbd5e1; padding-top: 20px;">
             <p style="font-size: 18px; font-weight: bold; color: #1e3a8a; margin: 0; text-align: right;">
-                Make your own and print:<br>Use <span style="color: #2563eb;">bit.ly/4wpuMVL</span> or scan ➡️
+                Make your own simple draw:<br>Use <span style="color: #2563eb;">bit.ly/4wpuMVL</span> or scan ➡️
             </p>
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://bit.ly/4wpuMVL" alt="QR Code" style="width: 100px; height: 100px; border: 2px solid #333; border-radius: 8px; padding: 4px;">
         </div>`;
