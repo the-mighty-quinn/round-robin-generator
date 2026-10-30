@@ -43,7 +43,7 @@
 
         @page {
             size: portrait;
-            margin: 8mm 10mm;
+            margin: 6mm 8mm;
         }
 
         @media print {
@@ -58,25 +58,25 @@
             .container { 
                 box-shadow: none !important; 
                 padding: 0 !important; 
-                margin: 0 !important;
-                max-width: 100% !important;
+                margin: 0 !important; 
+                max-width: 100% !important; 
                 width: 100% !important;
             }
             h2 { 
-                margin: 0 0 4px 0 !important; 
-                font-size: 16pt !important; 
-                line-height: 1.2 !important;
+                margin: 0 0 2px 0 !important; 
+                font-size: 14pt !important; 
+                line-height: 1.15 !important;
             }
             p { 
-                margin: 0 0 8px 0 !important; 
-                font-size: 11pt !important; 
-                line-height: 1.3 !important;
+                margin: 0 0 4px 0 !important; 
+                font-size: 9.5pt !important; 
+                line-height: 1.2 !important;
             }
             table { 
                 border-collapse: collapse !important;
                 border: 1.5px solid black !important; 
                 width: 100% !important; 
-                margin-top: 6px !important; 
+                margin-top: 4px !important; 
             }
             tr {
                 page-break-inside: avoid !important;
@@ -84,32 +84,36 @@
             }
             th, td { 
                 border: 1px solid black !important; 
-                padding: 6px 4px !important; 
-                font-size: 11pt !important; 
-                line-height: 1.2 !important;
+                padding: 3px 2px !important; 
+                font-size: 9.5pt !important; 
+                line-height: 1.15 !important;
             }
             th { 
                 background-color: #e2e8f0 !important; 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
+                padding: 4px 2px !important;
             }
             .vs { 
-                margin: 1px 0 !important; 
-                font-size: 9.5px !important; 
+                margin: 0 !important; 
+                font-size: 8pt !important; 
+                line-height: 1 !important;
             }
             .promo-footer {
-                margin-top: 12px !important;
-                padding-top: 10px !important;
-                gap: 15px !important;
+                margin-top: 8px !important;
+                padding-top: 6px !important;
+                gap: 12px !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
             }
             .promo-footer p {
-                font-size: 13.5px !important;
+                font-size: 10.5pt !important;
+                line-height: 1.2 !important;
             }
             .promo-footer img {
-                width: 80px !important;
-                height: 80px !important;
+                width: 65px !important;
+                height: 65px !important;
+                padding: 2px !important;
             }
         }
     </style>
@@ -124,10 +128,10 @@
         <input type="text" id="group-name" placeholder="Pickleball Rotation Schedule">
         
         <label for="names">Player Names (separated by commas):</label>
-        <textarea id="names" rows="3" placeholder="e.g. Paul O, Bill, Bob, Wayne, Ian M, Grey, Quinn, Simon, Ed"></textarea>
+        <textarea id="names" rows="3" placeholder="e.g. Alex, Chris, Dave, Emma, John, Lisa, Mike, Sarah, Tom"></textarea>
         
         <label for="rest-names">Who needs a mid-session rest? (Optional - up to 4 names separated by commas):</label>
-        <input type="text" id="rest-names" placeholder="e.g. Bill, Ed">
+        <input type="text" id="rest-names" placeholder="e.g. Mike, Emma">
         <div class="help-text">These players will be heavily prioritized to sit out during the middle rounds.</div>
         
         <div class="row">
@@ -303,11 +307,11 @@ function generateSchedule() {
     html += `</tbody></table>`;
     
     html += `
-        <div class="promo-footer" style="margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 20px; page-break-inside: avoid; border-top: 2px dashed #cbd5e1; padding-top: 12px;">
-            <p style="font-size: 15px; font-weight: bold; color: #1e3a8a; margin: 0; text-align: right;">
+        <div class="promo-footer" style="margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 15px; page-break-inside: avoid; border-top: 2px dashed #cbd5e1; padding-top: 8px;">
+            <p style="font-weight: bold; color: #1e3a8a; margin: 0; text-align: right;">
                 Make your own simple draw:<br>Use <span style="color: #2563eb;">bit.ly/4wpuMVL</span> or scan ➡️
             </p>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=https://bit.ly/4wpuMVL" alt="QR Code" style="width: 85px; height: 85px; border: 2px solid #333; border-radius: 8px; padding: 3px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=https://bit.ly/4wpuMVL" alt="QR Code" style="border: 1.5px solid #333; border-radius: 6px;">
         </div>`;
         
     document.getElementById('output-area').innerHTML = html;
